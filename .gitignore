@@ -1,0 +1,7 @@
+# Local backend configuration and Xcode output
+AlbumRater/BackendConfig.plist
+.build/
+DerivedData/
+xcuserdata/
+*.xcuserstate
+.DS_Store
