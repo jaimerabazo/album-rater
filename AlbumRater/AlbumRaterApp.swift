@@ -15,29 +15,10 @@ struct AlbumRaterApp: App {
                     )
                 } else if auth.isRestoring {
                     ProgressView("Restoring your account…")
-                } else if let user = auth.user, !auth.isRecovering {
-                    NavigationStack {
-                        List {
-                            Section("Your account") {
-                                Text(user.email ?? "Signed in")
-                            }
-                            Section {
-                                ContentUnavailableView(
-                                    "Your listening history starts here",
-                                    systemImage: "opticaldisc",
-                                    description: Text("Album sessions, track ratings, and friends are the next step.")
-                                )
-                            }
-                            Section {
-                                Button("Sign out", role: .destructive) {
-                                    Task { await auth.signOut() }
-                                }
-                                .disabled(auth.isBusy)
-                                if let error = auth.errorMessage { Text(error).foregroundStyle(.red) }
-                            }
-                        }
-                        .navigationTitle("Album Rater")
-                    }
+                } else if let user = auth.user, let client = auth.client, !auth.isRecovering {
+                    // Una cuenta distinta obtiene su propio estado; no reutiliza el perfil anterior.
+                    ProfileView(user: user, auth: auth, client: client)
+                        .id(user.id)
                 } else {
                     AuthView(auth: auth)
                 }

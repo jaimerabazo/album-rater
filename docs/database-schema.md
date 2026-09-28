@@ -1,7 +1,10 @@
 # Base de datos — paso 1: cuenta y perfil
 
-Estado: diseño inicial. Este documento no crea tablas ni modifica Supabase.
-El código actual utiliza Supabase Auth; todavía no crea ni consulta perfiles.
+Estado: migración aplicada al proyecto album-rater el 11 de septiembre de 2026.
+La app ya crea y recupera perfiles. La prueba completa en iPhone está pendiente.
+
+Migración: `supabase/migrations/20260911000100_create_profiles.sql`.
+Pruebas de permisos: `supabase/tests/profiles.sql`.
 
 ## Dónde está tu cuenta
 
@@ -27,12 +30,12 @@ limit 50;
 La consulta se ejecuta desde el panel como administrador. No debemos dar a la
 app permiso para listar las cuentas o los emails de otros usuarios.
 
-## Qué añadiríamos primero
+## Cuenta y perfil
 
 Una cuenta permite identificarte y entrar. Un perfil contiene los datos que
 eliges mostrar dentro de Album Rater, empezando por tu nombre.
 
-La tabla propuesta es `public.profiles`:
+La tabla es `public.profiles`:
 
 | Campo | Tipo | Significado |
 | --- | --- | --- |
@@ -46,14 +49,18 @@ El nombre visible puede repetirse: dos personas pueden llamarse Jaime.
 El `username`, en cambio, no puede repetirse. El UUID sigue siendo la clave interna
 y no cambia por elegir otro username.
 
-Propuesta de formato pendiente de confirmar: entre 3 y 30 caracteres, letras
-ASCII, números y guion bajo. Se quitarían espacios de los extremos y se
-guardaría en minúsculas: `Jaime` y `jaime` representarían el mismo username.
-La base de datos exigiría `NOT NULL`, `UNIQUE` y el formato acordado mediante
+Formato inicial implementado: entre 3 y 30 caracteres, letras
+ASCII, números y guion bajo. Se quitan espacios de los extremos y se
+guarda en minúsculas: `Jaime` y `jaime` representarían el mismo username.
+La base de datos exige `NOT NULL`, `UNIQUE` y el formato acordado mediante
 `CHECK`. No basta con comprobar disponibilidad en la pantalla: si dos personas
 intentan guardar el mismo username a la vez, solo una escritura puede tener éxito.
 La app mostrará «Ese nombre de usuario ya está en uso» sin sobrescribir otro perfil.
-Las reglas para cambiar o reutilizar un username quedan pendientes.
+La interfaz de esta fase permite crear y leer el perfil. Los permisos también
+permiten actualizar username y nombre visible propios; todavía no hay pantalla
+de edición. No hay reserva histórica de usernames: al cambiarlo o borrar la
+cuenta, queda libre. Las reglas futuras de cambio y reserva deberán definirse
+antes de añadir esa interfaz.
 
 ```mermaid
 erDiagram
@@ -77,7 +84,7 @@ sin cuenta. El email y la contraseña no se copian al perfil.
 
 ## Cuándo se crearía el perfil
 
-Propuesta para la siguiente implementación: después de iniciar sesión, si todavía
+Después de iniciar sesión, si todavía
 no tienes perfil, la app te pide tu nombre visible y tu username, y los guarda. Si ya tienes perfil,
 lo recupera. Esto también sirve para la cuenta que ya has creado.
 
@@ -86,25 +93,32 @@ sin volver a crear la cuenta. En esta fase no necesitamos automatismos en el alt
 
 ## Permisos desde el principio
 
-Al crear la tabla, añadiremos también las reglas de acceso:
+La tabla tiene las siguientes reglas de acceso:
 
 - Sin iniciar sesión, no se puede leer ni escribir ningún perfil.
 - Cada persona puede crear, leer y editar solamente su propio perfil.
 - El servidor comprueba que el identificador corresponde a la persona autenticada.
 - Al eliminar una cuenta, se elimina su perfil asociado.
 
-Estas reglas se aplicarán con permisos de PostgreSQL y RLS (seguridad por fila).
+Estas reglas se aplican con permisos de PostgreSQL y RLS (seguridad por fila).
 RLS comprueba qué registros puede usar cada persona, aunque intente saltarse la
 interfaz. El nombre `public` del esquema no significa que cualquiera pueda leerlo.
 
 Cuando implementemos amigos, definiremos qué datos pueden ver entre sí.
-Primero probaremos estas reglas con dos cuentas, intentando acceder al perfil ajeno.
+Las pruebas SQL simulan dos cuentas e intentan acceder al perfil ajeno; al
+terminar revierten los datos de prueba.
 
-## Siguiente paso acotado
+## Cómo probarlo en la app
 
-Crear esta única tabla con sus permisos y conectar guardar/leer el perfil en Swift.
-Guardaremos el SQL en el repositorio como una migración: un archivo que deja
-registrado exactamente qué estructura y permisos se añadieron.
+1. Ejecuta el proyecto e inicia sesión con tu cuenta existente.
+2. Completa nombre visible y username; pulsa Guardar perfil.
+3. Cierra sesión y entra otra vez: debe recuperarse el perfil guardado.
+4. Con otra cuenta, intenta el mismo username: debe aparecer un aviso.
+
+La app distingue un perfil inexistente de un error de conexión o permisos.
+Un fallo de carga muestra Reintentar, sin inventar un perfil vacío. Si la primera
+respuesta de guardado se pierde, reintentar recupera el perfil existente sin
+sobrescribirlo. El estado se reinicia al cambiar de cuenta.
 
 Álbumes, sesiones y notas se diseñarán en los siguientes pasos, con sus propios
 campos y reglas. No forman parte de este cambio.
