@@ -1,3 +1,4 @@
+import AlbumRaterCore
 import SwiftUI
 
 struct ReviewListView: View {
@@ -91,6 +92,7 @@ struct ReviewListView: View {
                     NavigationLink(value: session.id) {
                         SessionRow(session: session)
                     }
+                    .accessibilityIdentifier("session-row")
                     .swipeActions {
                         Button("Borrar", systemImage: "trash", role: .destructive) {
                             sessionToDelete = session

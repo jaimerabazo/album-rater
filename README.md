@@ -63,20 +63,34 @@ Official references: [Swift setup](https://supabase.com/docs/guides/getting-star
 
 ## Understand the Swift files
 
+The code is split into layers. The local package `Packages/AlbumRaterKit` holds the logic, which the app target imports.
+
+**`AlbumRaterCore`** — no dependencies, unit tested with a 95% coverage gate:
+
+| File | Responsibility |
+| --- | --- |
+| `Profile.swift` | Profile fields, input validation, and readable errors. |
+| `ProfileStore.swift` | Profile loading/saving state, independent of the database client. |
+| `TextValidation.swift` | Single-line text rules shared with the PostgreSQL checks. |
+| `Review.swift` | Albums, tracks, scores, the album average, input validation, and readable errors. |
+| `ReviewsStore.swift` | Album history state shared by the list and detail screens. |
+
+**`AlbumRaterData`** — Supabase access, integration tested against a local Supabase:
+
+| File | Responsibility |
+| --- | --- |
+| `SupabaseProfileRepository.swift` | Reads and inserts the current user's profile. |
+| `SupabaseReviewRepository.swift` | Loads, creates, and deletes albums; saves and clears track scores. |
+
+**`AlbumRater/`** (app target) — SwiftUI screens, covered by UI tests:
+
 | File | Responsibility |
 | --- | --- |
 | `AlbumRaterApp.swift` | Starts the app and chooses the setup, login, or home screen. |
 | `Backend.swift` | Reads configuration and creates one Supabase client with Keychain storage. |
 | `AuthStore.swift` | Performs account requests and holds the current user and loading state. |
 | `AuthView.swift` | Displays forms and sends the user's input to the account store. |
-| `Profile.swift` | Profile fields, input validation, and readable errors. |
-| `ProfileStore.swift` | Profile loading/saving state, independent of the database client. |
-| `SupabaseProfileRepository.swift` | Reads and inserts the current user's profile. |
 | `ProfileView.swift` | Requests a missing profile, then shows the album history. |
-| `TextValidation.swift` | Single-line text rules shared with the PostgreSQL checks. |
-| `Review.swift` | Albums, tracks, scores, the album average, input validation, and readable errors. |
-| `ReviewsStore.swift` | Album history state shared by the list and detail screens. |
-| `SupabaseReviewRepository.swift` | Loads, creates, and deletes albums; saves and clears track scores. |
 | `ReviewListView.swift` | Album history, profile menu, and deletion. |
 | `NewReviewView.swift` | Form for a new album with one track per line. |
 | `ReviewDetailView.swift` | Album tracks and the live average. |
@@ -101,9 +115,17 @@ These checks require a real Supabase development project. Compilation alone does
 
 See [the product plan](docs/product-plan.md) for the next small milestones and the backend permissions we will need.
 
-## Verification of this starter
+## Tests
 
-On September 7, 2026, Xcode 26.6 successfully compiled the app and its pinned dependencies for both arm64 and x86_64 iPhone simulator architectures using an SDK-only target build. The project and configuration property lists also passed validation. A simulator launch and real-account tests were not performed: this Mac needs its iOS platform/runtime component installed, and no Supabase project configuration has been supplied.
+Each layer has its own tests: unit tests with a 95% coverage gate for the core logic, integration tests against a local Supabase for the data layer, pgTAP for the database permissions, and UI tests for the critical flow. See [docs/testing.md](docs/testing.md).
+
+```sh
+supabase start          # local Supabase in Docker (once per session)
+scripts/test-core.sh    # unit tests + coverage gate
+scripts/test-data.sh    # data layer integration tests
+supabase test db        # database permission tests
+scripts/test-ui.sh      # UI tests in the simulator
+```
 
 For a repeatable compile without launching a simulator:
 
@@ -130,7 +152,7 @@ Todavía no incluye edición de perfil ni cambio de username en la interfaz.
 
 La nueva integración compila con Xcode. Las pruebas de Swift, PostgreSQL aislado y permisos en el proyecto Supabase
 pasan; el recorrido completo en iPhone debe comprobarse con tu cuenta.
-Consulta [las pruebas](Tests/README.md) y [el esquema actualizado](docs/database-schema.md).
+Consulta [las pruebas](docs/testing.md) y [el esquema actualizado](docs/database-schema.md).
 
 ## Reviews individuales (milestone 2)
 

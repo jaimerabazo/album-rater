@@ -1,3 +1,4 @@
+import AlbumRaterCore
 import SwiftUI
 
 struct NewReviewView: View {

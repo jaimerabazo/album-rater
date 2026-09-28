@@ -1,10 +1,10 @@
 import Foundation
 
-struct Profile: Decodable, Equatable, Identifiable {
-    let id: UUID
-    let username: String
-    let displayName: String
-    let createdAt: Date
+public struct Profile: Decodable, Equatable, Identifiable, Sendable {
+    public let id: UUID
+    public let username: String
+    public let displayName: String
+    public let createdAt: Date
 
     enum CodingKeys: String, CodingKey {
         case id, username
@@ -14,17 +14,17 @@ struct Profile: Decodable, Equatable, Identifiable {
 }
 
 // Los mismos límites se comprueban en PostgreSQL: la pantalla no es una barrera de seguridad.
-struct ProfileInput: Encodable, Equatable {
-    let id: UUID
-    let username: String
-    let displayName: String
+public struct ProfileInput: Encodable, Equatable, Sendable {
+    public let id: UUID
+    public let username: String
+    public let displayName: String
 
     enum CodingKeys: String, CodingKey {
         case id, username
         case displayName = "display_name"
     }
 
-    init(id: UUID, username: String, displayName: String) throws {
+    public init(id: UUID, username: String, displayName: String) throws {
         let username = username.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
         let allowed = Set("abcdefghijklmnopqrstuvwxyz0123456789_".unicodeScalars)
         guard (3...30).contains(username.utf8.count),
@@ -40,10 +40,10 @@ struct ProfileInput: Encodable, Equatable {
     }
 }
 
-enum ProfileError: LocalizedError {
+public enum ProfileError: LocalizedError {
     case invalidUsername, invalidDisplayName, usernameTaken, backendNotReady, accessDenied, unavailable
 
-    var errorDescription: String? {
+    public var errorDescription: String? {
         switch self {
         case .invalidUsername: "Usa entre 3 y 30 caracteres: letras a–z, números o guion bajo."
         case .invalidDisplayName: "Escribe un nombre visible de 1 a 50 caracteres, sin saltos de línea."
