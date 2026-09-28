@@ -8,7 +8,8 @@ A small iPhone app for keeping the first-listen reviews you make with friends. B
 - Login, saved login sessions in Keychain, and sign-out on this device.
 - Password recovery using an email code.
 - Loading states, basic form validation, and readable errors.
-- An honest empty listening-history screen after login.
+- Profile creation after login, with a unique username and display name.
+- Saved profile retrieval on subsequent logins, then an empty listening-history screen.
 
 This is an authentication foundation, not the finished listening app. Friends, ratings, stored album history, playback, and synchronization are not implemented. No hosted backend has been created or configured by this repository.
 
@@ -16,14 +17,14 @@ This is an authentication foundation, not the finished listening app. Friends, r
 
 1. Open `AlbumRater.xcodeproj` in **Xcode**, Apple's app development tool. This project targets iPhone with iOS 17 or later. Use Xcode 26 or later for the pinned package's Swift tools requirements.
 2. Let Xcode download the Supabase Swift package. The package version is pinned so the starting point stays reproducible.
-3. In **Xcode > Settings > Components**, install the iOS platform/runtime if Xcode asks for it (this Mac currently reports iOS 26.5 missing). Choose an iPhone simulator and press **Run** (Command-R). Without backend configuration, you'll see a setup message.
+3. In **Xcode > Settings > Components**, install the iOS platform/runtime if Xcode asks for it (if it is missing). Choose an iPhone simulator and press **Run** (Command-R). Without backend configuration, you'll see a setup message.
 4. Complete the Supabase setup below, then run again.
 
 For a physical iPhone, choose your own unique Bundle Identifier and your Apple development team under the app target's **Signing & Capabilities**. The starter uses `com.example.albumrater` as a placeholder.
 
 ## Connect Supabase
 
-Supabase provides account management and a PostgreSQL database we can use later. The iPhone talks to its API over HTTPS. We do not implement password storage ourselves.
+Supabase provides account management and the PostgreSQL database for profiles. The iPhone talks to its API over HTTPS. We do not implement password storage ourselves.
 
 1. Create a development project at [Supabase](https://supabase.com/dashboard). Choose a suitable region for your users.
 2. In Authentication, enable email/password sign-up and **keep email confirmation enabled**. Set the minimum password length to **12** on the server as well as in the app. Leave anonymous sign-ins disabled.
@@ -55,7 +56,7 @@ The local configuration file is ignored by Git. A publishable key is intentional
 
 Official references: [Swift setup](https://supabase.com/docs/guides/getting-started/quickstarts/ios-swiftui), [email templates](https://supabase.com/docs/guides/auth/auth-email-templates), [password settings](https://supabase.com/docs/guides/auth/password-security).
 
-## Understand the four Swift files
+## Understand the Swift files
 
 | File | Responsibility |
 | --- | --- |
@@ -63,6 +64,10 @@ Official references: [Swift setup](https://supabase.com/docs/guides/getting-star
 | `Backend.swift` | Reads configuration and creates one Supabase client with Keychain storage. |
 | `AuthStore.swift` | Performs account requests and holds the current user and loading state. |
 | `AuthView.swift` | Displays forms and sends the user's input to the account store. |
+| `Profile.swift` | Profile fields, input validation, and readable errors. |
+| `ProfileStore.swift` | Profile loading/saving state, independent of the database client. |
+| `SupabaseProfileRepository.swift` | Reads and inserts the current user's profile. |
+| `ProfileView.swift` | Requests a missing profile or displays the saved one. |
 
 `@State` remembers a screen's values. `@Observable` lets SwiftUI notice changes to the account store. `async` / `await` lets a request finish without freezing the screen. `@MainActor` keeps screen state updates on the main thread.
 
@@ -74,7 +79,7 @@ These checks require a real Supabase development project. Compilation alone does
 
 - With no configuration, the setup screen appears without a crash.
 - A new account must confirm its email; an incorrect code does not grant access.
-- Correct login opens the empty history screen; an incorrect password shows a useful error.
+- Correct login loads your profile or asks you to create it; an incorrect password shows a useful error.
 - Closing and reopening the app restores a saved account. Backend requests must still validate the access token: cached screen state is not authorization.
 - Sign-out returns to login and stays signed out after relaunch.
 - Password recovery accepts a valid email code, requires matching new passwords, and allows login with the new password after sign-out.
@@ -97,3 +102,19 @@ DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer xcodebuild \
   OBJROOT=/private/tmp/album-rater-target-objects \
   CODE_SIGNING_ALLOWED=NO build
 ```
+
+## Perfiles y migración
+
+La tabla `public.profiles` se creó en el proyecto album-rater el 11 de septiembre
+de 2026. El SQL exacto está en
+[`supabase/migrations/20260911000100_create_profiles.sql`](supabase/migrations/20260911000100_create_profiles.sql).
+No vuelvas a ejecutarlo en ese proyecto. Para otro entorno, sigue
+[la guía de la migración](supabase/README.md).
+
+La app ya pide nombre visible y username después del login cuando no existe perfil.
+Al guardarlo espera la respuesta del servidor; en el siguiente acceso lo recupera.
+Todavía no incluye edición de perfil ni cambio de username en la interfaz.
+
+La nueva integración compila con Xcode. Las pruebas de Swift, PostgreSQL aislado y permisos en el proyecto Supabase
+pasan; el recorrido completo en iPhone debe comprobarse con tu cuenta.
+Consulta [las pruebas](Tests/README.md) y [el esquema actualizado](docs/database-schema.md).

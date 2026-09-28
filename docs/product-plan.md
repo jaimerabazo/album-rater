@@ -17,7 +17,7 @@ A listening session is one occasion: reviewing the same album next year should c
 
 ## Backend boundaries
 
-For the first milestone, Supabase Auth owns the user records; the app creates no public database tables. There is no custom password database, admin endpoint, or music credential storage.
+Supabase Auth owns the user records. The profile milestone adds public.profiles with owner-only read/write policies; see database-schema.md and the versioned SQL migration. There is no custom password database, admin endpoint, or music credential storage.
 
 When adding reviews, introduce versioned database migrations and Row Level Security (RLS). RLS means the database itself decides which rows a person can access, even if someone bypasses the app's screens. Do not add tables with broad public access to make development easier.
 
