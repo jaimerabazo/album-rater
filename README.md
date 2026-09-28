@@ -49,7 +49,11 @@ Supabase provides account management and the PostgreSQL database for profiles. T
    This starter uses codes entered in the app, so it does not need a website or email deep links. Use the newest code. If it expires, return to login and start the sign-up/recovery flow again. Supabase can rate-limit repeated requests.
 
 5. Configure a mail provider under **Custom SMTP** to send to your friend's email too. Supabase's built-in test mail service restricts recipients and delivery volume; it is not suitable for public use. See [SMTP setup](https://supabase.com/docs/guides/auth/auth-smtp).
-6. Duplicate `AlbumRater/BackendConfig.example.plist` as `AlbumRater/BackendConfig.plist` in the same folder. Replace the placeholders with your **project URL** and **publishable key** from the project's Connect/API settings. Xcode automatically includes this folder's files.
+6. Copy `Config/BackendConfig.example.plist` to `AlbumRater/BackendConfig.plist`. Replace the placeholders with your **project URL** and **publishable key** from the project's Connect/API settings. Xcode automatically includes every file in the `AlbumRater` folder, which is why the template lives outside it.
+
+   ```sh
+   cp Config/BackendConfig.example.plist AlbumRater/BackendConfig.plist
+   ```
 7. Run the app, create an account, retrieve the email code, and enter it in the app.
 
 The local configuration file is ignored by Git. A publishable key is intentionally included in a shipped app and is not a server secret. **Never use a secret key or a service_role key in the iPhone app.** Database access must be restricted by backend permissions, not by hiding this key.
