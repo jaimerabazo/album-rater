@@ -33,19 +33,17 @@ como ya aplicada antes de usar `db push` contra este proyecto; no intentar recre
 
 ## Pruebas de permisos
 
-`tests/profiles.sql` crea dos cuentas ficticias dentro de una transacción, comprueba
-permisos y restricciones, y termina con `ROLLBACK`: no conserva datos de prueba.
-Ejecutarlo en una base de desarrollo después de la migración. Si una sentencia
-falla, ejecutar `ROLLBACK` en la misma conexión antes de continuar.
+Los tests de `tests/database/*.test.sql` usan pgTAP y se ejecutan contra el Supabase local:
 
-Incluye lectura/edición propia, aislamiento entre cuentas, acceso sin sesión,
-username repetido, formato inválido, UUID repetido, cuenta inexistente, fecha e ID
-no editables y borrado del perfil al borrar la cuenta.
+```sh
+supabase start      # aplica todas las migraciones sobre una base vacía
+supabase test db
+```
 
-Para probar de forma aislada, se ha usado PostgreSQL embebido (PGlite 0.3.14), con
-una tabla auth.users mínima y una función auth.uid que toma el usuario simulado.
-Eso verifica PostgreSQL y RLS; no sustituye la prueba de autenticación y guardado
-en un iPhone conectado al proyecto real.
+Cada fichero trabaja en una transacción que termina con `ROLLBACK`. Simulan dos cuentas
+y un visitante sin sesión: lectura y edición propia, aislamiento entre cuentas, formatos,
+duplicados, cuentas inexistentes, columnas no editables y borrados en cascada.
+Ver [docs/testing.md](../docs/testing.md).
 
 ## Registro de aplicación y verificación
 
@@ -53,7 +51,7 @@ en un iPhone conectado al proyecto real.
 
 - Migración ejecutada desde SQL Editor: `Success. No rows returned.`
 - Consulta de catálogo: `profiles` existe y `relrowsecurity = true`.
-- `tests/profiles.sql` ejecutado en el proyecto: `PASS: permisos, restricciones y borrado en cascada`.
+- Pruebas de permisos (entonces `tests/profiles.sql`) ejecutadas en el proyecto: `PASS: permisos, restricciones y borrado en cascada`.
 - La transacción de pruebas terminó con `ROLLBACK`; no conserva cuentas ni perfiles ficticios.
 - Compilación de la app y pruebas de lógica Swift: correctas.
 - Prueba completa desde el iPhone con la cuenta del usuario: pendiente.
@@ -83,7 +81,6 @@ cambiarán de «propietario» a «participante».
 ### Aplicación
 
 En **SQL Editor**, pega el contenido completo de la migración y ejecútalo una sola vez,
-después de la de perfiles. Luego ejecuta `tests/reviews.sql`: debe terminar con
-`PASS: reviews, notas, permisos y borrados en cascada` y no conserva datos de prueba.
+después de la de perfiles. Antes, comprueba en local que `supabase test db` pasa.
 
 Registro de aplicación: pendiente.

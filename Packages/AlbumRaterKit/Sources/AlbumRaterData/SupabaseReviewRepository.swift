@@ -1,16 +1,22 @@
+import AlbumRaterCore
 import Foundation
 import Supabase
 
 @MainActor
-struct SupabaseReviewRepository: ReviewRepository {
+public struct SupabaseReviewRepository: ReviewRepository {
     let client: SupabaseClient
     let userID: UUID
+
+    public init(client: SupabaseClient, userID: UUID) {
+        self.client = client
+        self.userID = userID
+    }
 
     // Sesión, canciones y la nota propia de cada canción en una sola petición.
     private static let columns =
         "id, album_title, artist_name, created_at, session_tracks(id, position, title, track_ratings(score, comment))"
 
-    func loadAll() async throws -> [ListeningSession] {
+    public func loadAll() async throws -> [ListeningSession] {
         do {
             return try await client.from("listening_sessions")
                 .select(Self.columns)
@@ -21,7 +27,7 @@ struct SupabaseReviewRepository: ReviewRepository {
         }
     }
 
-    func create(_ input: NewSessionInput) async throws -> ListeningSession {
+    public func create(_ input: NewSessionInput) async throws -> ListeningSession {
         do {
             try await client.rpc("create_listening_session", params: input).execute()
         } catch let error as PostgrestError where error.code == "23505" {
@@ -33,7 +39,7 @@ struct SupabaseReviewRepository: ReviewRepository {
         return session
     }
 
-    func setRating(_ rating: TrackRating, trackID: UUID) async throws {
+    public func setRating(_ rating: TrackRating, trackID: UUID) async throws {
         do {
             try await client.rpc("set_track_rating", params: RatingParams(trackID: trackID, rating: rating)).execute()
         } catch {
@@ -41,7 +47,7 @@ struct SupabaseReviewRepository: ReviewRepository {
         }
     }
 
-    func clearRating(trackID: UUID) async throws {
+    public func clearRating(trackID: UUID) async throws {
         do {
             try await client.from("track_ratings")
                 .delete(returning: .minimal)
@@ -53,7 +59,7 @@ struct SupabaseReviewRepository: ReviewRepository {
         }
     }
 
-    func delete(sessionID: UUID) async throws {
+    public func delete(sessionID: UUID) async throws {
         do {
             try await client.from("listening_sessions")
                 .delete(returning: .minimal)

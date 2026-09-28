@@ -2,18 +2,18 @@ import Foundation
 
 /// Nota de 1 a 10 con un decimal como máximo. Se guarda en décimas (85 = 8,5)
 /// para que sumar y comparar sea exacto; Double no representa 0,1 con exactitud.
-struct Score: Hashable, Comparable {
-    static let range = 10...100
+public struct Score: Hashable, Comparable, Sendable {
+    public static let range = 10...100
 
-    let tenths: Int
+    public let tenths: Int
 
-    init?(tenths: Int) {
+    public init?(tenths: Int) {
         guard Self.range.contains(tenths) else { return nil }
         self.tenths = tenths
     }
 
     /// Acepta «8,5» y «8.5»: el teclado decimal usa coma o punto según el idioma del iPhone.
-    init?(parsing text: String) {
+    public init?(parsing text: String) {
         let parts = text.trimmingCharacters(in: .whitespaces)
             .replacingOccurrences(of: ",", with: ".")
             .split(separator: ".", omittingEmptySubsequences: false)
@@ -27,16 +27,16 @@ struct Score: Hashable, Comparable {
         self.init(tenths: whole * 10 + decimal)
     }
 
-    var value: Double { Double(tenths) / 10 }
+    public var value: Double { Double(tenths) / 10 }
     /// Exacto para enviarlo a PostgreSQL: 85 → 8.5.
-    var decimalValue: Decimal { Decimal(tenths) / 10 }
-    var formatted: String { value.formatted(.number.precision(.fractionLength(0...1))) }
+    public var decimalValue: Decimal { Decimal(tenths) / 10 }
+    public var formatted: String { value.formatted(.number.precision(.fractionLength(0...1))) }
 
-    static func < (lhs: Score, rhs: Score) -> Bool { lhs.tenths < rhs.tenths }
+    public static func < (lhs: Score, rhs: Score) -> Bool { lhs.tenths < rhs.tenths }
 }
 
 extension Score: Decodable {
-    init(from decoder: Decoder) throws {
+    public init(from decoder: Decoder) throws {
         let value = try decoder.singleValueContainer().decode(Double.self)
         guard let score = Score(tenths: Int((value * 10).rounded())) else {
             throw DecodingError.dataCorrupted(.init(codingPath: decoder.codingPath,
@@ -46,11 +46,11 @@ extension Score: Decodable {
     }
 }
 
-struct TrackRating: Decodable, Equatable {
-    let score: Score
-    let comment: String?
+public struct TrackRating: Decodable, Equatable, Sendable {
+    public let score: Score
+    public let comment: String?
 
-    init(score: Score, comment: String) throws {
+    public init(score: Score, comment: String) throws {
         let comment = comment.trimmingCharacters(in: .whitespacesAndNewlines)
         guard comment.unicodeScalars.count <= 1000 else { throw ReviewError.invalidComment }
         self.score = score
@@ -58,13 +58,13 @@ struct TrackRating: Decodable, Equatable {
     }
 }
 
-struct SessionTrack: Decodable, Identifiable, Equatable {
-    let id: UUID
-    let position: Int
-    let title: String
-    var rating: TrackRating?
+public struct SessionTrack: Decodable, Identifiable, Equatable, Sendable {
+    public let id: UUID
+    public let position: Int
+    public let title: String
+    public var rating: TrackRating?
 
-    init(id: UUID, position: Int, title: String, rating: TrackRating? = nil) {
+    public init(id: UUID, position: Int, title: String, rating: TrackRating? = nil) {
         self.id = id
         self.position = position
         self.title = title
@@ -76,7 +76,7 @@ struct SessionTrack: Decodable, Identifiable, Equatable {
         case ratings = "track_ratings"
     }
 
-    init(from decoder: Decoder) throws {
+    public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         id = try container.decode(UUID.self, forKey: .id)
         position = try container.decode(Int.self, forKey: .position)
@@ -86,14 +86,14 @@ struct SessionTrack: Decodable, Identifiable, Equatable {
     }
 }
 
-struct ListeningSession: Decodable, Identifiable, Equatable {
-    let id: UUID
-    let albumTitle: String
-    let artistName: String
-    let createdAt: Date
-    var tracks: [SessionTrack]
+public struct ListeningSession: Decodable, Identifiable, Equatable, Sendable {
+    public let id: UUID
+    public let albumTitle: String
+    public let artistName: String
+    public let createdAt: Date
+    public var tracks: [SessionTrack]
 
-    init(id: UUID, albumTitle: String, artistName: String, createdAt: Date, tracks: [SessionTrack]) {
+    public init(id: UUID, albumTitle: String, artistName: String, createdAt: Date, tracks: [SessionTrack]) {
         self.id = id
         self.albumTitle = albumTitle
         self.artistName = artistName
@@ -109,7 +109,7 @@ struct ListeningSession: Decodable, Identifiable, Equatable {
         case tracks = "session_tracks"
     }
 
-    init(from decoder: Decoder) throws {
+    public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         id = try container.decode(UUID.self, forKey: .id)
         albumTitle = try container.decode(String.self, forKey: .albumTitle)
@@ -118,27 +118,27 @@ struct ListeningSession: Decodable, Identifiable, Equatable {
         tracks = try container.decode([SessionTrack].self, forKey: .tracks).sorted { $0.position < $1.position }
     }
 
-    var ratedCount: Int { tracks.count { $0.rating != nil } }
+    public var ratedCount: Int { tracks.count { $0.rating != nil } }
 
     /// Media de las canciones ya puntuadas; nil si todavía no hay ninguna.
     /// Es una propiedad calculada: cambia sola cada vez que cambia una nota.
-    var averageScore: Double? {
+    public var averageScore: Double? {
         let scores = tracks.compactMap { $0.rating?.score.tenths }
         guard !scores.isEmpty else { return nil }
         return Double(scores.reduce(0, +)) / Double(scores.count) / 10
     }
 
-    var formattedAverage: String? {
+    public var formattedAverage: String? {
         averageScore?.formatted(.number.precision(.fractionLength(0...2)))
     }
 }
 
 // Los mismos límites se comprueban en PostgreSQL: la pantalla no es una barrera de seguridad.
-struct NewSessionInput: Encodable, Equatable {
-    let id: UUID
-    let albumTitle: String
-    let artistName: String
-    let trackTitles: [String]
+public struct NewSessionInput: Encodable, Equatable, Sendable {
+    public let id: UUID
+    public let albumTitle: String
+    public let artistName: String
+    public let trackTitles: [String]
 
     // Nombres de los parámetros de create_listening_session.
     enum CodingKeys: String, CodingKey {
@@ -149,7 +149,7 @@ struct NewSessionInput: Encodable, Equatable {
     }
 
     /// trackList contiene una canción por línea; las líneas vacías se ignoran.
-    init(id: UUID, albumTitle: String, artistName: String, trackList: String) throws {
+    public init(id: UUID, albumTitle: String, artistName: String, trackList: String) throws {
         guard let album = TextValidation.singleLine(albumTitle, length: 1...200) else {
             throw ReviewError.invalidAlbumTitle
         }
@@ -172,18 +172,18 @@ struct NewSessionInput: Encodable, Equatable {
         self.trackTitles = titles
     }
 
-    static func trackCount(in trackList: String) -> Int {
+    public static func trackCount(in trackList: String) -> Int {
         trackList.split(whereSeparator: \.isNewline)
             .count { !$0.trimmingCharacters(in: .whitespaces).isEmpty }
     }
 }
 
-enum ReviewError: LocalizedError, Equatable {
+public enum ReviewError: LocalizedError, Equatable {
     case invalidAlbumTitle, invalidArtistName, invalidTrackCount, invalidTrackTitle(position: Int)
     case invalidScore, invalidComment
     case backendNotReady, accessDenied, unavailable
 
-    var errorDescription: String? {
+    public var errorDescription: String? {
         switch self {
         case .invalidAlbumTitle: "Escribe el título del álbum (hasta 200 caracteres)."
         case .invalidArtistName: "Escribe el nombre del artista (hasta 200 caracteres)."

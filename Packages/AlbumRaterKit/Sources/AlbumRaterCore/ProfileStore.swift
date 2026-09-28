@@ -2,29 +2,29 @@ import Foundation
 import Observation
 
 @MainActor
-protocol ProfileRepository {
+public protocol ProfileRepository {
     func load(userID: UUID) async throws -> Profile?
     func create(_ input: ProfileInput) async throws -> Profile
 }
 
 @MainActor @Observable
-final class ProfileStore {
-    enum State: Equatable {
+public final class ProfileStore {
+    public enum State: Equatable {
         case loading, needsProfile, ready(Profile), failed
     }
 
-    private(set) var state: State = .loading
-    private(set) var isSaving = false
-    private(set) var errorMessage: String?
+    public private(set) var state: State = .loading
+    public private(set) var isSaving = false
+    public private(set) var errorMessage: String?
     private let userID: UUID
     private let repository: any ProfileRepository
 
-    init(userID: UUID, repository: any ProfileRepository) {
+    public init(userID: UUID, repository: any ProfileRepository) {
         self.userID = userID
         self.repository = repository
     }
 
-    func load() async {
+    public func load() async {
         guard !isSaving else { return }
         state = .loading
         errorMessage = nil
@@ -39,7 +39,7 @@ final class ProfileStore {
         }
     }
 
-    func save(username: String, displayName: String) async {
+    public func save(username: String, displayName: String) async {
         guard !isSaving, state == .needsProfile else { return }
         errorMessage = nil
         isSaving = true

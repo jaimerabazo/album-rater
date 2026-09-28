@@ -1,11 +1,16 @@
+import AlbumRaterCore
 import Foundation
 import Supabase
 
 @MainActor
-struct SupabaseProfileRepository: ProfileRepository {
+public struct SupabaseProfileRepository: ProfileRepository {
     let client: SupabaseClient
 
-    func load(userID: UUID) async throws -> Profile? {
+    public init(client: SupabaseClient) {
+        self.client = client
+    }
+
+    public func load(userID: UUID) async throws -> Profile? {
         do {
             let profiles: [Profile] = try await client.from("profiles")
                 .select("id, username, display_name, created_at")
@@ -18,7 +23,7 @@ struct SupabaseProfileRepository: ProfileRepository {
         }
     }
 
-    func create(_ input: ProfileInput) async throws -> Profile {
+    public func create(_ input: ProfileInput) async throws -> Profile {
         do {
             // INSERT, no upsert: un reintento nunca debe sobrescribir un perfil existente.
             return try await client.from("profiles")

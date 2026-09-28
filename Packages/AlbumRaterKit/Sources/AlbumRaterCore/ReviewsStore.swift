@@ -2,7 +2,7 @@ import Foundation
 import Observation
 
 @MainActor
-protocol ReviewRepository {
+public protocol ReviewRepository {
     func loadAll() async throws -> [ListeningSession]
     func create(_ input: NewSessionInput) async throws -> ListeningSession
     func setRating(_ rating: TrackRating, trackID: UUID) async throws
@@ -13,23 +13,23 @@ protocol ReviewRepository {
 /// Historial de álbumes del usuario. La lista y el detalle comparten este store,
 /// así que la media se actualiza en ambas pantallas en cuanto se guarda una nota.
 @MainActor @Observable
-final class ReviewsStore {
-    enum State: Equatable { case loading, failed, ready }
+public final class ReviewsStore {
+    public enum State: Equatable { case loading, failed, ready }
 
-    private(set) var state: State = .loading
-    private(set) var sessions: [ListeningSession] = []
-    private(set) var errorMessage: String?
+    public private(set) var state: State = .loading
+    public private(set) var sessions: [ListeningSession] = []
+    public private(set) var errorMessage: String?
     private let repository: any ReviewRepository
 
-    init(repository: any ReviewRepository) {
+    public init(repository: any ReviewRepository) {
         self.repository = repository
     }
 
-    func session(id: UUID) -> ListeningSession? {
+    public func session(id: UUID) -> ListeningSession? {
         sessions.first { $0.id == id }
     }
 
-    func load() async {
+    public func load() async {
         if sessions.isEmpty { state = .loading }
         errorMessage = nil
         do {
@@ -46,7 +46,7 @@ final class ReviewsStore {
     }
 
     /// El formulario genera `id` una vez: reintentar con el mismo id nunca duplica el álbum.
-    func create(id: UUID, albumTitle: String, artistName: String, trackList: String) async throws -> ListeningSession {
+    public func create(id: UUID, albumTitle: String, artistName: String, trackList: String) async throws -> ListeningSession {
         let input = try NewSessionInput(id: id, albumTitle: albumTitle, artistName: artistName, trackList: trackList)
         do {
             let session = try await repository.create(input)
@@ -60,7 +60,7 @@ final class ReviewsStore {
     }
 
     /// Solo cambia la nota en pantalla después de que el servidor confirme el guardado.
-    func saveRating(trackID: UUID, sessionID: UUID, scoreText: String, comment: String) async throws {
+    public func saveRating(trackID: UUID, sessionID: UUID, scoreText: String, comment: String) async throws {
         guard let score = Score(parsing: scoreText) else { throw ReviewError.invalidScore }
         let rating = try TrackRating(score: score, comment: comment)
         do {
@@ -71,7 +71,7 @@ final class ReviewsStore {
         updateTrack(trackID, in: sessionID) { $0.rating = rating }
     }
 
-    func clearRating(trackID: UUID, sessionID: UUID) async throws {
+    public func clearRating(trackID: UUID, sessionID: UUID) async throws {
         do {
             try await repository.clearRating(trackID: trackID)
         } catch {
@@ -80,7 +80,7 @@ final class ReviewsStore {
         updateTrack(trackID, in: sessionID) { $0.rating = nil }
     }
 
-    func delete(sessionID: UUID) async {
+    public func delete(sessionID: UUID) async {
         errorMessage = nil
         do {
             try await repository.delete(sessionID: sessionID)
@@ -90,7 +90,7 @@ final class ReviewsStore {
         }
     }
 
-    func dismissError() {
+    public func dismissError() {
         errorMessage = nil
     }
 

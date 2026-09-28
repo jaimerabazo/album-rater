@@ -8,14 +8,28 @@
 
 /* Begin PBXBuildFile section */
 		A00000000000000000000012 /* Supabase in Frameworks */ = {isa = PBXBuildFile; productRef = A00000000000000000000011 /* Supabase */; };
+		A00000000000000000000023 /* AlbumRaterCore in Frameworks */ = {isa = PBXBuildFile; productRef = A00000000000000000000021 /* AlbumRaterCore */; };
+		A00000000000000000000024 /* AlbumRaterData in Frameworks */ = {isa = PBXBuildFile; productRef = A00000000000000000000022 /* AlbumRaterData */; };
 /* End PBXBuildFile section */
 
+/* Begin PBXContainerItemProxy section */
+		B00000000000000000000010 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = A00000000000000000000001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = A00000000000000000000002;
+			remoteInfo = AlbumRater;
+		};
+/* End PBXContainerItemProxy section */
+
 /* Begin PBXFileReference section */
+		B00000000000000000000001 /* AlbumRaterUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = AlbumRaterUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		A0000000000000000000000B /* AlbumRater.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = AlbumRater.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		A0000000000000000000000A /* AlbumRater */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = AlbumRater; sourceTree = "<group>"; };
+		B00000000000000000000002 /* AlbumRaterUITests */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = AlbumRaterUITests; sourceTree = "<group>"; };
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -24,6 +38,15 @@
 			buildActionMask = 2147483647;
 			files = (
 				A00000000000000000000012 /* Supabase in Frameworks */,
+				A00000000000000000000023 /* AlbumRaterCore in Frameworks */,
+				A00000000000000000000024 /* AlbumRaterData in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B00000000000000000000005 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -34,6 +57,7 @@
 			isa = PBXGroup;
 			children = (
 				A0000000000000000000000A /* AlbumRater */,
+				B00000000000000000000002 /* AlbumRaterUITests */,
 				A00000000000000000000005 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -42,6 +66,7 @@
 			isa = PBXGroup;
 			children = (
 				A0000000000000000000000B /* AlbumRater.app */,
+				B00000000000000000000001 /* AlbumRaterUITests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -67,10 +92,33 @@
 			name = AlbumRater;
 			packageProductDependencies = (
 				A00000000000000000000011 /* Supabase */,
+				A00000000000000000000021 /* AlbumRaterCore */,
+				A00000000000000000000022 /* AlbumRaterData */,
 			);
 			productName = AlbumRater;
 			productReference = A0000000000000000000000B /* AlbumRater.app */;
 			productType = "com.apple.product-type.application";
+		};
+		B00000000000000000000003 /* AlbumRaterUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = B00000000000000000000007 /* Build configuration list for PBXNativeTarget "AlbumRaterUITests" */;
+			buildPhases = (
+				B00000000000000000000004 /* Sources */,
+				B00000000000000000000005 /* Frameworks */,
+				B00000000000000000000006 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				B00000000000000000000011 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				B00000000000000000000002 /* AlbumRaterUITests */,
+			);
+			name = AlbumRaterUITests;
+			productName = AlbumRaterUITests;
+			productReference = B00000000000000000000001 /* AlbumRaterUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
 		};
 /* End PBXNativeTarget section */
 
@@ -83,6 +131,10 @@
 				TargetAttributes = {
 					A00000000000000000000002 = {
 						CreatedOnToolsVersion = 26.0;
+					};
+					B00000000000000000000003 = {
+						CreatedOnToolsVersion = 27.0;
+						TestTargetID = A00000000000000000000002;
 					};
 				};
 			};
@@ -98,18 +150,27 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				A00000000000000000000010 /* XCRemoteSwiftPackageReference "supabase-swift" */,
+				A00000000000000000000020 /* XCLocalSwiftPackageReference "Packages/AlbumRaterKit" */,
 			);
 			productRefGroup = A00000000000000000000005 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
 				A00000000000000000000002 /* AlbumRater */,
+				B00000000000000000000003 /* AlbumRaterUITests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
 		A00000000000000000000009 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B00000000000000000000006 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -126,7 +187,22 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		B00000000000000000000004 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		B00000000000000000000011 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = A00000000000000000000002 /* AlbumRater */;
+			targetProxy = B00000000000000000000010 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		A00000000000000000000013 /* Debug */ = {
@@ -166,6 +242,7 @@
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = iphoneos;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
 			};
@@ -253,6 +330,40 @@
 			};
 			name = Release;
 		};
+		B00000000000000000000008 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.example.albumrater.uitests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				TARGETED_DEVICE_FAMILY = 1;
+				TEST_TARGET_NAME = AlbumRater;
+			};
+			name = Debug;
+		};
+		B00000000000000000000009 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.example.albumrater.uitests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				TARGETED_DEVICE_FAMILY = 1;
+				TEST_TARGET_NAME = AlbumRater;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -274,7 +385,23 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
+		B00000000000000000000007 /* Build configuration list for PBXNativeTarget "AlbumRaterUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				B00000000000000000000008 /* Debug */,
+				B00000000000000000000009 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 /* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		A00000000000000000000020 /* XCLocalSwiftPackageReference "Packages/AlbumRaterKit" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Packages/AlbumRaterKit;
+		};
+/* End XCLocalSwiftPackageReference section */
 
 /* Begin XCRemoteSwiftPackageReference section */
 		A00000000000000000000010 /* XCRemoteSwiftPackageReference "supabase-swift" */ = {
@@ -292,6 +419,14 @@
 			isa = XCSwiftPackageProductDependency;
 			package = A00000000000000000000010 /* XCRemoteSwiftPackageReference "supabase-swift" */;
 			productName = Supabase;
+		};
+		A00000000000000000000021 /* AlbumRaterCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = AlbumRaterCore;
+		};
+		A00000000000000000000022 /* AlbumRaterData */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = AlbumRaterData;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

@@ -1,3 +1,4 @@
+import AlbumRaterCore
 import SwiftUI
 
 struct ReviewDetailView: View {
@@ -22,6 +23,7 @@ struct ReviewDetailView: View {
                     ForEach(session.tracks) { track in
                         Button { editingTrack = track } label: { TrackRow(track: track) }
                             .tint(.primary)
+                            .accessibilityIdentifier("track-\(track.position)")
                     }
                 }
             }
@@ -55,6 +57,7 @@ private struct AverageSummary: View {
                 .animation(.default, value: session.averageScore)
         }
         .accessibilityElement(children: .combine)
+        .accessibilityIdentifier("album-average")
     }
 }
 
