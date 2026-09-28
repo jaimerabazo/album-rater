@@ -32,7 +32,10 @@ final class FakeProfiles: ProfileRepository {
                 preconditionFailure("Accepted invalid username")
             } catch ProfileError.invalidUsername { }
         }
-        for name in ["  ", String(repeating: "a", count: 51), "a\nb"] {
+        for name in ["Jaime 👨‍💻", "Ana 🇪🇸", "José ❤️"] {
+            _ = try ProfileInput(id: id, username: "valid", displayName: name)
+        }
+        for name in ["  ", String(repeating: "a", count: 51), "a\nb", "a\tb", "a\u{2028}b"] {
             do {
                 _ = try ProfileInput(id: id, username: "valid", displayName: name)
                 preconditionFailure("Accepted invalid display name")
