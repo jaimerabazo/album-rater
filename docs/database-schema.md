@@ -120,7 +120,65 @@ Un fallo de carga muestra Reintentar, sin inventar un perfil vacío. Si la prime
 respuesta de guardado se pierde, reintentar recupera el perfil existente sin
 sobrescribirlo. El estado se reinicia al cambiar de cuenta.
 
-Álbumes, sesiones y notas se diseñarán en los siguientes pasos, con sus propios
-campos y reglas. No forman parte de este cambio.
+# Paso 2: reviews individuales
+
+Estado: migración escrita, pendiente de aplicar en Supabase.
+
+Migración: `supabase/migrations/20260928000100_create_solo_reviews.sql`.
+Pruebas de permisos: `supabase/tests/reviews.sql`.
+
+Una **sesión de escucha** es una ocasión: volver a escuchar el mismo álbum el año
+que viene crea otra sesión y otra entrada en el historial.
+
+| Tabla | Campos | Reglas |
+| --- | --- | --- |
+| `listening_sessions` | `id`, `owner_id`, `album_title`, `artist_name`, `created_at` | Título y artista de 1 a 200 caracteres, sin saltos de línea. `owner_id` lo asigna el servidor. |
+| `session_tracks` | `id`, `session_id`, `position`, `title` | Entre 1 y 100 canciones; posición única por sesión. No se editan. |
+| `track_ratings` | `track_id`, `user_id`, `score`, `comment` | Una nota por persona y canción. `score` de 1 a 10 con un decimal como máximo. Comentario opcional de hasta 1000 caracteres. |
+
+```mermaid
+erDiagram
+    AUTH_USERS ||--o{ LISTENING_SESSIONS : "crea"
+    LISTENING_SESSIONS ||--|{ SESSION_TRACKS : "tiene"
+    SESSION_TRACKS ||--o{ TRACK_RATINGS : "recibe"
+    AUTH_USERS ||--o{ TRACK_RATINGS : "puntúa"
+    LISTENING_SESSIONS {
+        uuid id PK
+        uuid owner_id FK
+        text album_title
+        text artist_name
+        timestamptz created_at
+    }
+    SESSION_TRACKS {
+        uuid id PK
+        uuid session_id FK
+        smallint position
+        text title
+    }
+    TRACK_RATINGS {
+        uuid track_id PK,FK
+        uuid user_id PK,FK
+        numeric score
+        text comment
+    }
+```
+
+## La media del álbum
+
+No hay columna de media. La media es el promedio de las canciones **ya puntuadas**:
+con 5 canciones, si solo has puntuado la primera con 9, la media es 9; si puntúas la
+segunda con 8, pasa a 8,5. Las canciones sin nota no cuentan. Guardarla aparte
+podría dejarla desincronizada de las notas; calcularla siempre da el valor correcto.
+
+## Permisos
+
+- Cada persona solo ve, crea y borra sus propias sesiones, canciones y notas.
+- Solo se puede puntuar una canción de una sesión propia.
+- No se puede elegir `owner_id` ni `user_id`, ni editar canciones o títulos.
+- Borrar una sesión borra sus canciones y notas; borrar la cuenta borra todo lo suyo.
+
+Cuando se compartan sesiones con amigos (milestone 3), la comprobación pasará de
+«propietario» a «participante de la sesión». La edición de álbumes y canciones
+está fuera de este paso: para corregir un error, se borra el álbum y se crea de nuevo.
 
 Referencia: [Gestión de usuarios en Supabase](https://supabase.com/docs/guides/auth/managing-user-data).

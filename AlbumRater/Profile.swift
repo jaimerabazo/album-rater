@@ -26,18 +26,12 @@ struct ProfileInput: Encodable, Equatable {
 
     init(id: UUID, username: String, displayName: String) throws {
         let username = username.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
-        let name = displayName.trimmingCharacters(in: .whitespacesAndNewlines)
         let allowed = Set("abcdefghijklmnopqrstuvwxyz0123456789_".unicodeScalars)
         guard (3...30).contains(username.utf8.count),
               username.unicodeScalars.allSatisfy({ allowed.contains($0) }) else {
             throw ProfileError.invalidUsername
         }
-        // PostgreSQL cuenta caracteres Unicode, no grupos visuales como un emoji compuesto.
-        // Lo mismo que [[:cntrl:]] en PostgreSQL: control (Cc) y separadores de línea/párrafo.
-        // CharacterSet.controlCharacters también incluye los de formato (Cf) y rechazaría emoji como 👨‍💻.
-        let forbidden: Set<Unicode.GeneralCategory> = [.control, .lineSeparator, .paragraphSeparator]
-        guard (1...50).contains(name.unicodeScalars.count),
-              !name.unicodeScalars.contains(where: { forbidden.contains($0.properties.generalCategory) }) else {
+        guard let name = TextValidation.singleLine(displayName, length: 1...50) else {
             throw ProfileError.invalidDisplayName
         }
         self.id = id

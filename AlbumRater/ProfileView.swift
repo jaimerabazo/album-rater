@@ -1,9 +1,12 @@
 import SwiftUI
 import Supabase
 
+/// Carga el perfil o lo pide si falta. Con el perfil listo, muestra el historial de álbumes.
 struct ProfileView: View {
     let email: String
     let auth: AuthStore
+    private let userID: UUID
+    private let client: SupabaseClient
     @State private var store: ProfileStore
     @State private var username = ""
     @State private var displayName = ""
@@ -11,6 +14,8 @@ struct ProfileView: View {
     init(user: User, auth: AuthStore, client: SupabaseClient) {
         self.email = user.email ?? ""
         self.auth = auth
+        self.userID = user.id
+        self.client = client
         _store = State(initialValue: ProfileStore(
             userID: user.id,
             repository: SupabaseProfileRepository(client: client)
@@ -18,10 +23,24 @@ struct ProfileView: View {
     }
 
     var body: some View {
+        Group {
+            if case .ready(let profile) = store.state {
+                ReviewListView(
+                    profile: profile, email: email, auth: auth,
+                    repository: SupabaseReviewRepository(client: client, userID: userID)
+                )
+            } else {
+                onboarding
+            }
+        }
+        .task { await store.load() }
+    }
+
+    private var onboarding: some View {
         NavigationStack {
             Form {
                 switch store.state {
-                case .loading:
+                case .loading, .ready:
                     ProgressView("Cargando tu perfil…")
                 case .failed:
                     Section("No se ha podido cargar el perfil") {
@@ -53,19 +72,6 @@ struct ProfileView: View {
                         }
                         .disabled(username.isEmpty || displayName.isEmpty)
                     }
-                case .ready(let profile):
-                    Section("Tu perfil") {
-                        LabeledContent("Nombre", value: profile.displayName)
-                        LabeledContent("Usuario", value: "@\(profile.username)")
-                        if !email.isEmpty { LabeledContent("Email", value: email) }
-                    }
-                    Section {
-                        ContentUnavailableView(
-                            "Tu historial empieza aquí",
-                            systemImage: "opticaldisc",
-                            description: Text("Las sesiones, las notas y los amigos serán el siguiente paso.")
-                        )
-                    }
                 }
                 Section {
                     Button("Cerrar sesión", role: .destructive) { Task { await auth.signOut() } }
@@ -75,7 +81,6 @@ struct ProfileView: View {
             .disabled(store.isSaving || auth.isBusy)
             .navigationTitle("Album Rater")
         }
-        .task { await store.load() }
     }
 
     @ViewBuilder private var errorMessage: some View {

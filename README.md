@@ -9,9 +9,10 @@ A small iPhone app for keeping the first-listen reviews you make with friends. B
 - Password recovery using an email code.
 - Loading states, basic form validation, and readable errors.
 - Profile creation after login, with a unique username and display name.
-- Saved profile retrieval on subsequent logins, then an empty listening-history screen.
+- Saved profile retrieval on subsequent logins.
+- Solo reviews: add an album with its track list, score each track from 1 to 10 (one decimal at most) with an optional comment, and reopen it from your history. The album average is calculated from the tracks you have scored so far and updates with every new score.
 
-This is an authentication foundation, not the finished listening app. Friends, ratings, stored album history, playback, and synchronization are not implemented. No hosted backend has been created or configured by this repository.
+Friends, shared sessions, live updates, playback, and synchronization are not implemented. No hosted backend has been created or configured by this repository.
 
 ## Run it in Xcode
 
@@ -71,7 +72,15 @@ Official references: [Swift setup](https://supabase.com/docs/guides/getting-star
 | `Profile.swift` | Profile fields, input validation, and readable errors. |
 | `ProfileStore.swift` | Profile loading/saving state, independent of the database client. |
 | `SupabaseProfileRepository.swift` | Reads and inserts the current user's profile. |
-| `ProfileView.swift` | Requests a missing profile or displays the saved one. |
+| `ProfileView.swift` | Requests a missing profile, then shows the album history. |
+| `TextValidation.swift` | Single-line text rules shared with the PostgreSQL checks. |
+| `Review.swift` | Albums, tracks, scores, the album average, input validation, and readable errors. |
+| `ReviewsStore.swift` | Album history state shared by the list and detail screens. |
+| `SupabaseReviewRepository.swift` | Loads, creates, and deletes albums; saves and clears track scores. |
+| `ReviewListView.swift` | Album history, profile menu, and deletion. |
+| `NewReviewView.swift` | Form for a new album with one track per line. |
+| `ReviewDetailView.swift` | Album tracks and the live average. |
+| `TrackRatingView.swift` | Score and comment for one track. |
 
 `@State` remembers a screen's values. `@Observable` lets SwiftUI notice changes to the account store. `async` / `await` lets a request finish without freezing the screen. `@MainActor` keeps screen state updates on the main thread.
 
@@ -122,3 +131,14 @@ Todavía no incluye edición de perfil ni cambio de username en la interfaz.
 La nueva integración compila con Xcode. Las pruebas de Swift, PostgreSQL aislado y permisos en el proyecto Supabase
 pasan; el recorrido completo en iPhone debe comprobarse con tu cuenta.
 Consulta [las pruebas](Tests/README.md) y [el esquema actualizado](docs/database-schema.md).
+
+## Reviews individuales (milestone 2)
+
+La migración
+[`supabase/migrations/20260928000100_create_solo_reviews.sql`](supabase/migrations/20260928000100_create_solo_reviews.sql)
+crea `listening_sessions`, `session_tracks` y `track_ratings`. **Hay que aplicarla en
+Supabase antes de usar esta parte de la app**; hasta entonces el historial muestra un
+aviso para aplicar la migración. Sigue [la guía](supabase/README.md).
+
+Las notas van de 1 a 10 con un decimal como máximo. La media del álbum no se guarda:
+se calcula con las canciones ya puntuadas y cambia con cada nota nueva.

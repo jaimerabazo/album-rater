@@ -1,4 +1,6 @@
-# Perfiles de Album Rater
+# Migraciones de Album Rater
+
+## Perfiles
 
 La migración `migrations/20260911000100_create_profiles.sql` crea una sola tabla:
 `public.profiles`. No crea cuentas nuevas ni cambia la estructura de Supabase Auth.
@@ -58,3 +60,30 @@ en un iPhone conectado al proyecto real.
 
 El historial gestionado por Supabase CLI no se ha modificado. Este archivo registra
 la aplicación manual del SQL que permanece versionado en el repositorio.
+
+## Reviews individuales
+
+La migración `migrations/20260928000100_create_solo_reviews.sql` crea:
+
+1. **listening_sessions**: un álbum escuchado en una ocasión (título, artista, propietario, fecha).
+2. **session_tracks**: sus canciones en orden. No se editan; borrar la sesión las borra.
+3. **track_ratings**: una nota por persona y canción, de 1 a 10 con un decimal como máximo,
+   y un comentario opcional de hasta 1000 caracteres. `numeric` sin precisión fija hace que
+   8,25 se rechace en lugar de redondearse en silencio.
+4. **create_listening_session**: crea la sesión y sus canciones en una sola transacción.
+   La app envía el id para que un reintento no duplique el álbum.
+5. **set_track_rating**: guarda o sustituye la nota propia de una canción.
+
+La media del álbum **no se guarda**: la app la calcula con las canciones puntuadas.
+`owner_id` y `user_id` los asigna `auth.uid()`; la app no puede elegirlos. Las funciones
+usan `security invoker`, así que aplican los mismos permisos y políticas que una consulta directa.
+`user_id` en `track_ratings` prepara el milestone 3: al compartir sesiones, las políticas
+cambiarán de «propietario» a «participante».
+
+### Aplicación
+
+En **SQL Editor**, pega el contenido completo de la migración y ejecútalo una sola vez,
+después de la de perfiles. Luego ejecuta `tests/reviews.sql`: debe terminar con
+`PASS: reviews, notas, permisos y borrados en cascada` y no conserva datos de prueba.
+
+Registro de aplicación: pendiente.
