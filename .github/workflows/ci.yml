@@ -97,7 +97,7 @@ jobs:
             -e SUPABASE_TEST_URL -e SUPABASE_TEST_PUBLISHABLE_KEY \
             -v "$PWD:/repo" -w /repo \
             "$SWIFT_IMAGE" \
-            bash -c "scripts/test-core.sh && scripts/test-data.sh"
+            bash -c "apt-get update -qq && apt-get install -y -qq python3 >/dev/null && scripts/test-core.sh && scripts/test-data.sh"
 
   app:
     name: App iOS
