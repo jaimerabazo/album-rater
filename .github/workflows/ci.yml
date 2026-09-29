@@ -1,0 +1,152 @@
+# Checks de cada PR y de main. Las capas y sus scripts se explican en docs/testing.md.
+# - database: migraciones y permisos (pgTAP) en Linux.
+# - packages: tests de Swift del paquete en Linux: Core con barrera del 95% y Data contra Supabase local.
+# - app: compila la app y los tests de UI en macOS, solo si cambia el código de la app.
+# Los tests de UI necesitan Supabase local (Docker) y los runners de macOS no tienen Docker:
+# se ejecutan en local con scripts/test-ui.sh antes de fusionar.
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# Un push nuevo a la misma PR cancela la ejecución anterior.
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+env:
+  SUPABASE_CLI_VERSION: 2.118.0
+  SWIFT_IMAGE: swift:6.2
+  XCODE_VERSION: "26.6"
+
+jobs:
+  changes:
+    name: Cambios
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    outputs:
+      app: ${{ steps.filter.outputs.app }}
+      packages: ${{ steps.filter.outputs.packages }}
+      database: ${{ steps.filter.outputs.database }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - id: filter
+        name: Detectar qué capas cambian
+        env:
+          BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+        run: |
+          # En main, workflow_dispatch o si no hay base conocida, se ejecuta todo.
+          if [[ "$GITHUB_EVENT_NAME" != "pull_request" ]] || ! git cat-file -e "${BASE:-none}^{commit}" 2>/dev/null; then
+            echo "app=true" "packages=true" "database=true" | tr ' ' '\n' >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          files="$(git diff --name-only "$BASE" HEAD)"
+          echo "$files"
+          matches() { grep -qE "$1" <<<"$files" && echo true || echo false; }
+          ci='^(\.github/workflows/|scripts/)'
+          echo "app=$(matches "$ci|^AlbumRater|^Packages/")" >> "$GITHUB_OUTPUT"
+          echo "packages=$(matches "$ci|^Packages/|^supabase/")" >> "$GITHUB_OUTPUT"
+          echo "database=$(matches "$ci|^supabase/")" >> "$GITHUB_OUTPUT"
+
+  database:
+    name: Base de datos
+    needs: changes
+    if: needs.changes.outputs.database == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: supabase/setup-cli@45a513f8c64c0bc8e0e3dfe572b5c95be85f6359 # v3.0.1
+        with:
+          version: ${{ env.SUPABASE_CLI_VERSION }}
+      - name: Aplicar migraciones sobre una base vacía
+        run: supabase db start
+      - name: Tests de permisos (pgTAP)
+        run: supabase test db
+
+  packages:
+    name: Paquete Swift
+    needs: changes
+    if: needs.changes.outputs.packages == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: Packages/AlbumRaterKit/.build
+          key: swiftpm-linux-${{ env.SWIFT_IMAGE }}-${{ hashFiles('Packages/AlbumRaterKit/Package.resolved') }}
+          restore-keys: swiftpm-linux-${{ env.SWIFT_IMAGE }}-
+      - uses: supabase/setup-cli@45a513f8c64c0bc8e0e3dfe572b5c95be85f6359 # v3.0.1
+        with:
+          version: ${{ env.SUPABASE_CLI_VERSION }}
+      - name: Supabase local (Auth y API)
+        run: supabase start -x studio,mailpit,postgres-meta
+      - name: Core (barrera de cobertura del 95%) y Data (integración)
+        run: |
+          source scripts/local-supabase-env.sh
+          docker run --rm --network host \
+            -e SUPABASE_TEST_URL -e SUPABASE_TEST_PUBLISHABLE_KEY \
+            -v "$PWD:/repo" -w /repo \
+            "$SWIFT_IMAGE" \
+            bash -c "scripts/test-core.sh && scripts/test-data.sh"
+
+  app:
+    name: App iOS
+    needs: changes
+    if: needs.changes.outputs.app == 'true'
+    runs-on: macos-26
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Seleccionar Xcode ${{ env.XCODE_VERSION }}
+        run: sudo xcode-select -s "/Applications/Xcode_${XCODE_VERSION}.app"
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: DerivedData/SourcePackages
+          key: spm-xcode-${{ env.XCODE_VERSION }}-${{ hashFiles('AlbumRater.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved') }}
+          restore-keys: spm-xcode-${{ env.XCODE_VERSION }}-
+      - name: Compilar la app y los tests de UI
+        run: |
+          xcodebuild build-for-testing \
+            -project AlbumRater.xcodeproj \
+            -scheme AlbumRater \
+            -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath DerivedData \
+            -skipPackagePluginValidation -skipMacroValidation \
+            CODE_SIGNING_ALLOWED=NO
+      - name: Compilar en Release
+        run: |
+          xcodebuild build \
+            -project AlbumRater.xcodeproj \
+            -scheme AlbumRater \
+            -configuration Release \
+            -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath DerivedData \
+            -skipPackagePluginValidation -skipMacroValidation \
+            CODE_SIGNING_ALLOWED=NO
+
+  # Un único check para exigir en main: pasa si cada capa pasó o no tenía cambios.
+  ci:
+    name: CI
+    needs: [changes, database, packages, app]
+    if: always()
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Resultado
+        env:
+          RESULTS: ${{ join(needs.*.result, ' ') }}
+        run: |
+          echo "Resultados: $RESULTS"
+          for result in $RESULTS; do
+            [[ "$result" == "success" || "$result" == "skipped" ]] || exit 1
+          done

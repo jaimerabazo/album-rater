@@ -127,6 +127,10 @@ supabase test db        # database permission tests
 scripts/test-ui.sh      # UI tests in the simulator
 ```
 
+Every pull request runs the same checks in GitHub Actions (`.github/workflows/ci.yml`); UI tests run locally. See [docs/testing.md](docs/testing.md#ci-github-actions).
+
+The Supabase Swift package is pinned in two places that must match: `Packages/AlbumRaterKit/Package.swift` and the app project's package dependency in Xcode. Dependabot proposes updates for the first one; update the second in the same pull request.
+
 For a repeatable compile without launching a simulator:
 
 ```sh

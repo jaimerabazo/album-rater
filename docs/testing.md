@@ -90,3 +90,29 @@ el proyecto de Supabase de producción y el dispositivo físico.
 2. Iniciar sesión con tu cuenta y comprobar perfil, álbumes y notas.
 3. Cortar la red al guardar y reintentar: sin guardados falsos ni duplicados.
 4. Texto grande de accesibilidad y VoiceOver.
+
+## CI (GitHub Actions)
+
+`.github/workflows/ci.yml` se ejecuta en cada PR y en cada push a `main`:
+
+| Job | Runner | Qué hace | Cuándo |
+| --- | --- | --- | --- |
+| Base de datos | Ubuntu | `supabase db start` (migraciones sobre una base vacía) y `supabase test db` | Cambios en `supabase/` |
+| Paquete Swift | Ubuntu + imagen `swift` | `scripts/test-core.sh` (barrera del 95%) y `scripts/test-data.sh` contra Supabase local | Cambios en `Packages/` o `supabase/` |
+| App iOS | macOS | Compila la app y los tests de UI (Debug) y la app en Release | Cambios en la app o en `Packages/` |
+| CI | Ubuntu | Resume los anteriores: es el check obligatorio para fusionar en `main` | Siempre |
+
+Los cambios en `.github/workflows/` o `scripts/` ejecutan todo. En `main` también se ejecuta todo.
+
+Los tests de UI no corren en el CI: necesitan Supabase local (Docker) y los runners de macOS
+no tienen Docker. Se ejecutan en local con `scripts/test-ui.sh` antes de fusionar un cambio
+de pantallas; la plantilla de PR lo recuerda. Cuando exista un proyecto Supabase de pruebas
+alojado, podrán pasar al CI.
+
+Para reproducir el job de Linux en tu Mac (con `supabase start` en marcha):
+
+```sh
+docker run --rm -e SUPABASE_TEST_URL=http://host.docker.internal:54321 \
+  -e SUPABASE_TEST_PUBLISHABLE_KEY="$(supabase status -o env | sed -n 's/^PUBLISHABLE_KEY="\(.*\)"$/\1/p')" \
+  -v "$PWD:/repo" -w /repo swift:6.2 bash -c "scripts/test-core.sh && scripts/test-data.sh"
+```
