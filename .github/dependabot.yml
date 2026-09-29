@@ -1,0 +1,24 @@
+# Actualizaciones semanales agrupadas: una PR por ecosistema, que el CI valida como cualquier otra.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      actions:
+        patterns: ["*"]
+    commit-message:
+      prefix: ci
+
+  # Dependencias del paquete (Supabase). El proyecto de Xcode fija la misma versión:
+  # al actualizar, cambia también el paquete remoto del proyecto (ver README).
+  - package-ecosystem: swift
+    directory: /Packages/AlbumRaterKit
+    schedule:
+      interval: weekly
+    groups:
+      swift:
+        patterns: ["*"]
+    commit-message:
+      prefix: deps

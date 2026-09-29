@@ -3,22 +3,27 @@
 
 Uso: coverage.py <carpeta bin de swift build> <módulo> [mínimo]
 Con mínimo, termina con error si la cobertura del módulo queda por debajo.
-Lee todos los bundles de tests: según la versión de SwiftPM hay uno por target o uno común.
+Lee todos los binarios de tests: en macOS, un bundle por target o uno común según la versión
+de SwiftPM; en Linux, un ejecutable `*.xctest`.
 """
 import glob
 import json
+import os
+import shutil
 import subprocess
 import sys
 
 bin_path, module = sys.argv[1], sys.argv[2]
 minimum = float(sys.argv[3]) if len(sys.argv) > 3 else None
 
-binaries = sorted(glob.glob(f"{bin_path}/*.xctest/Contents/MacOS/*"))
+binaries = sorted(glob.glob(f"{bin_path}/*.xctest/Contents/MacOS/*")
+                  + [path for path in glob.glob(f"{bin_path}/*.xctest") if os.path.isfile(path)])
 if not binaries:
-    sys.exit(f"No hay bundles de tests en {bin_path}")
+    sys.exit(f"No hay binarios de tests en {bin_path}")
 objects = [binaries[0]] + [arg for binary in binaries[1:] for arg in ("-object", binary)]
+llvm_cov = ["xcrun", "llvm-cov"] if shutil.which("xcrun") else ["llvm-cov"]
 report = json.loads(subprocess.run(
-    ["xcrun", "llvm-cov", "export", "-summary-only", "-instr-profile", f"{bin_path}/codecov/default.profdata", *objects],
+    [*llvm_cov, "export", "-summary-only", "-instr-profile", f"{bin_path}/codecov/default.profdata", *objects],
     check=True, capture_output=True, text=True,
 ).stdout)
 

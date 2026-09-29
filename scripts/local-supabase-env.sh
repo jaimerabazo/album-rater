@@ -2,6 +2,11 @@
 # Exporta la URL y la clave publicable del Supabase local (`supabase start`) para los tests.
 # Uso: source scripts/local-supabase-env.sh
 # Son las claves de demostración del entorno local, no las de ningún proyecto real.
+# Si las variables ya existen (p. ej. en el CI), se respetan.
+
+if [[ -n "${SUPABASE_TEST_URL:-}" && -n "${SUPABASE_TEST_PUBLISHABLE_KEY:-}" ]]; then
+    return 0 2>/dev/null || exit 0
+fi
 
 if ! supabase_status="$(supabase status -o env 2>/dev/null)"; then
     echo "Supabase local no está en marcha. Ejecuta: supabase start" >&2
