@@ -12,7 +12,7 @@ Estado: ⬜ pendiente · 🟡 en curso · ✅ hecho
 
 | ID | Qué | Terminado cuando… | Estado |
 | --- | --- | --- | --- |
-| M3.1 | Perfil público o privado (interruptor en tu perfil) | Cambias el interruptor, cierras la app y se mantiene | ⬜ |
+| M3.1 | Perfil público o privado (interruptor en tu perfil) | Cambias el interruptor, cierras la app y se mantiene | ✅ |
 | M3.2 | Buscar usuarios por username | Buscas «ana» y aparece Ana, sin su email ni datos privados | ⬜ |
 | M3.3 | Ver el perfil de otra persona | Tocas un resultado y ves su nombre, username y si es privado | ⬜ |
 

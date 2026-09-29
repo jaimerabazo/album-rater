@@ -3,15 +3,19 @@ import SwiftUI
 
 struct ReviewListView: View {
     let profile: Profile
+    let profileStore: ProfileStore
     let email: String
     let auth: AuthStore
     @State private var store: ReviewsStore
     @State private var path: [UUID] = []
     @State private var isAdding = false
+    @State private var isShowingProfile = false
     @State private var sessionToDelete: ListeningSession?
 
-    init(profile: Profile, email: String, auth: AuthStore, repository: any ReviewRepository) {
+    init(profile: Profile, profileStore: ProfileStore, email: String, auth: AuthStore,
+         repository: any ReviewRepository) {
         self.profile = profile
+        self.profileStore = profileStore
         self.email = email
         self.auth = auth
         _store = State(initialValue: ReviewsStore(repository: repository))
@@ -33,6 +37,9 @@ struct ReviewListView: View {
                 }
                 .sheet(isPresented: $isAdding) {
                     NewReviewView(store: store) { session in path.append(session.id) }
+                }
+                .sheet(isPresented: $isShowingProfile) {
+                    ProfileSettingsView(store: profileStore, email: email)
                 }
                 .confirmationDialog(
                     "¿Borrar «\(sessionToDelete?.albumTitle ?? "")»?",
@@ -111,6 +118,7 @@ struct ReviewListView: View {
                 Text("@\(profile.username)")
                 if !email.isEmpty { Text(email) }
             }
+            Button("Tu perfil", systemImage: "person.text.rectangle") { isShowingProfile = true }
             Button("Cerrar sesión", systemImage: "rectangle.portrait.and.arrow.right", role: .destructive) {
                 Task { await auth.signOut() }
             }
