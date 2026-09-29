@@ -5,11 +5,14 @@ public struct Profile: Decodable, Equatable, Identifiable, Sendable {
     public let username: String
     public let displayName: String
     public let createdAt: Date
+    /// Privado: solo los seguidores aprobados verán su historial (M3.7). Público por defecto (D-005).
+    public let isPrivate: Bool
 
     enum CodingKeys: String, CodingKey {
         case id, username
         case displayName = "display_name"
         case createdAt = "created_at"
+        case isPrivate = "is_private"
     }
 }
 

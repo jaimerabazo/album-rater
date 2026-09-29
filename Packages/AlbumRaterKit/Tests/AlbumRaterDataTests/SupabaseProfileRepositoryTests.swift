@@ -60,4 +60,29 @@ struct SupabaseProfileRepositoryTests {
             _ = try await SupabaseProfileRepository(client: LocalSupabase.anonymousClient()).load(userID: UUID())
         }
     }
+
+    @Test("Un perfil nuevo es público y se puede pasar a privado (M3.1)")
+    func privacyRoundTrip() async throws {
+        let (client, userID) = try await LocalSupabase.newAccount()
+        let repository = SupabaseProfileRepository(client: client)
+        let created = try await repository.create(
+            ProfileInput(id: userID, username: LocalSupabase.uniqueUsername(), displayName: "A"))
+        #expect(!created.isPrivate)
+        #expect(try await repository.setPrivacy(true, userID: userID).isPrivate)
+        #expect(try await repository.load(userID: userID)?.isPrivate == true)
+        #expect(try await !repository.setPrivacy(false, userID: userID).isPrivate)
+    }
+
+    @Test("Nadie puede cambiar la privacidad de otra cuenta")
+    func cannotChangeOthersPrivacy() async throws {
+        let (clientA, userA) = try await LocalSupabase.newAccount()
+        let repositoryA = SupabaseProfileRepository(client: clientA)
+        _ = try await repositoryA.create(ProfileInput(id: userA, username: LocalSupabase.uniqueUsername(), displayName: "A"))
+
+        let (clientB, _) = try await LocalSupabase.newAccount()
+        await #expect(throws: ProfileError.self) {
+            _ = try await SupabaseProfileRepository(client: clientB).setPrivacy(true, userID: userA)
+        }
+        #expect(try await repositoryA.load(userID: userA)?.isPrivate == false)
+    }
 }

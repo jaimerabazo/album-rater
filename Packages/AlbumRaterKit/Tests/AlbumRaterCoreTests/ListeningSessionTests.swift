@@ -75,9 +75,10 @@ struct SessionDecodingTests {
         decoder.dateDecodingStrategy = .iso8601
         let profile = try decoder.decode(Profile.self, from: Data("""
         {"id":"8F7C2B4E-1111-4000-8000-000000000009","username":"jaime","display_name":"Jaime",
-         "created_at":"2026-09-28T10:00:00Z"}
+         "created_at":"2026-09-28T10:00:00Z","is_private":true}
         """.utf8))
         #expect(profile.username == "jaime")
         #expect(profile.displayName == "Jaime")
+        #expect(profile.isPrivate)
     }
 }
