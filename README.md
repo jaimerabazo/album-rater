@@ -91,6 +91,7 @@ The code is split into layers. The local package `Packages/AlbumRaterKit` holds 
 | `AuthStore.swift` | Performs account requests and holds the current user and loading state. |
 | `AuthView.swift` | Displays forms and sends the user's input to the account store. |
 | `ProfileView.swift` | Requests a missing profile, then shows the album history. |
+| `ProfileSettingsView.swift` | Your profile details and the private profile switch. |
 | `ReviewListView.swift` | Album history, profile menu, and deletion. |
 | `NewReviewView.swift` | Form for a new album with one track per line. |
 | `ReviewDetailView.swift` | Album tracks and the live average. |

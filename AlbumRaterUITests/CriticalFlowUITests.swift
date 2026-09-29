@@ -22,6 +22,7 @@ final class CriticalFlowUITests: XCTestCase {
     func testSignUpCreateAlbumAndRateTracks() throws {
         signUp()
         createProfile()
+        makeProfilePrivate()
         createAlbum(title: "OK Computer", artist: "Radiohead", tracks: ["Airbag", "Paranoid Android", "Subterranean"])
 
         let average = app.descendants(matching: .any)["album-average"]
@@ -78,6 +79,20 @@ final class CriticalFlowUITests: XCTestCase {
              into: app.textFields["Nombre de usuario"])
         app.buttons["Guardar perfil"].tap()
         XCTAssertTrue(app.staticTexts["Tu historial empieza aquí"].waitForExistence(timeout: 15))
+    }
+
+    /// M3.1: el interruptor solo cambia cuando el servidor confirma el guardado.
+    private func makeProfilePrivate() {
+        app.buttons["Perfil"].tap()
+        app.buttons["Tu perfil"].tap()
+        let toggle = app.switches["Perfil privado"]
+        XCTAssertTrue(toggle.waitForExistence(timeout: 10))
+        XCTAssertEqual(toggle.value as? String, "0", "un perfil nuevo es público")
+        toggle.switches.firstMatch.tap()
+        let isOn = NSPredicate(format: "value == '1'")
+        XCTAssertEqual(XCTWaiter.wait(for: [expectation(for: isOn, evaluatedWith: toggle)], timeout: 10), .completed,
+                       "el perfil pasa a privado")
+        app.buttons["Hecho"].tap()
     }
 
     private func createAlbum(title: String, artist: String, tracks: [String]) {

@@ -28,7 +28,7 @@ struct ProfileView: View {
         Group {
             if case .ready(let profile) = store.state {
                 ReviewListView(
-                    profile: profile, email: email, auth: auth,
+                    profile: profile, profileStore: store, email: email, auth: auth,
                     repository: SupabaseReviewRepository(client: client, userID: userID)
                 )
             } else {

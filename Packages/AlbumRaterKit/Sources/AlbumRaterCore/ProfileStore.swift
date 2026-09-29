@@ -5,6 +5,8 @@ import Observation
 public protocol ProfileRepository {
     func load(userID: UUID) async throws -> Profile?
     func create(_ input: ProfileInput) async throws -> Profile
+    /// Cambia la privacidad del perfil y devuelve el perfil tal como quedó en el servidor.
+    func setPrivacy(_ isPrivate: Bool, userID: UUID) async throws -> Profile
 }
 
 @MainActor @Observable
@@ -52,6 +54,23 @@ public final class ProfileStore {
         } catch {
             guard !Task.isCancelled else { return }
             // Conservamos el formulario y el texto para poder reintentar.
+            errorMessage = message(for: error)
+        }
+    }
+
+    /// Cambia la privacidad del perfil propio. Solo cambia en pantalla cuando el servidor lo confirma.
+    public func setPrivate(_ isPrivate: Bool) async {
+        guard !isSaving, case .ready(let profile) = state, profile.isPrivate != isPrivate else { return }
+        errorMessage = nil
+        isSaving = true
+        defer { isSaving = false }
+        do {
+            let updated = try await repository.setPrivacy(isPrivate, userID: userID)
+            try Task.checkCancellation()
+            state = .ready(updated)
+        } catch {
+            guard !Task.isCancelled else { return }
+            // Se conserva el valor anterior: la pantalla nunca muestra un cambio sin confirmar.
             errorMessage = message(for: error)
         }
     }

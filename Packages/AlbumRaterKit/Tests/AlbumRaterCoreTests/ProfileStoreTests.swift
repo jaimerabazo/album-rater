@@ -15,7 +15,7 @@ struct ProfileStoreTests {
     }
 
     @Test func savedProfileIsRestored() async throws {
-        repo.saved = Profile(id: id, username: "jaime", displayName: "Jaime", createdAt: .now)
+        repo.saved = Profile(id: id, username: "jaime", displayName: "Jaime", createdAt: .now, isPrivate: false)
         let store = ProfileStore(userID: id, repository: repo)
         await store.load()
         #expect(store.state == .ready(try #require(repo.saved)))
@@ -120,5 +120,80 @@ struct ProfileStoreTests {
         #expect(store.state == .needsProfile)
         #expect(store.errorMessage == nil)
         #expect(!store.isSaving)
+    }
+
+    // MARK: - Privacidad (M3.1)
+
+    /// Store con el perfil ya guardado y cargado.
+    private func readyStore() async -> ProfileStore {
+        repo.saved = Profile(id: id, username: "jaime", displayName: "Jaime", createdAt: .now, isPrivate: false)
+        let store = ProfileStore(userID: id, repository: repo)
+        await store.load()
+        return store
+    }
+
+    @Test("Pasar a privado y volver a público")
+    func togglePrivacy() async throws {
+        let store = await readyStore()
+        await store.setPrivate(true)
+        #expect(store.state == .ready(try #require(repo.saved)))
+        #expect(repo.saved?.isPrivate == true)
+        await store.setPrivate(false)
+        #expect(repo.saved?.isPrivate == false)
+        #expect(repo.privacyChanges == 2)
+        #expect(!store.isSaving)
+    }
+
+    @Test("Elegir el valor que ya tiene no envía nada")
+    func sameValueIsNotSent() async {
+        let store = await readyStore()
+        await store.setPrivate(false)
+        #expect(repo.privacyChanges == 0)
+    }
+
+    @Test("Sin perfil cargado no se envía nada")
+    func requiresLoadedProfile() async {
+        let store = ProfileStore(userID: id, repository: repo)
+        await store.setPrivate(true)
+        #expect(repo.privacyChanges == 0)
+    }
+
+    @Test("Si el servidor falla, se conserva el valor anterior")
+    func failureKeepsPreviousValue() async throws {
+        let store = await readyStore()
+        let before = store.state
+        repo.error = ProfileError.accessDenied
+        await store.setPrivate(true)
+        #expect(store.state == before)
+        #expect(store.errorMessage == ProfileError.accessDenied.errorDescription)
+        #expect(!store.isSaving)
+        repo.error = nil
+        await store.setPrivate(true)
+        #expect(store.errorMessage == nil, "reintentar limpia el error")
+        #expect(repo.saved?.isPrivate == true)
+    }
+
+    @Test("Pulsar dos veces mientras guarda envía una sola petición")
+    func duplicatePrivacyChanges() async {
+        let store = await readyStore()
+        repo.delay = .milliseconds(50)
+        let first = Task { await store.setPrivate(true) }
+        await Task.yield()
+        await store.setPrivate(true)
+        await first.value
+        #expect(repo.privacyChanges == 1)
+    }
+
+    @Test("Cancelar el cambio no muestra un error falso")
+    func cancelledPrivacyChange() async {
+        let store = await readyStore()
+        let before = store.state
+        repo.delay = .seconds(10)
+        let task = Task { await store.setPrivate(true) }
+        await Task.yield()
+        task.cancel()
+        await task.value
+        #expect(store.state == before)
+        #expect(store.errorMessage == nil)
     }
 }

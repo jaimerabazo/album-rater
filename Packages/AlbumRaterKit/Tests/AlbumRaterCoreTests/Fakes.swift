@@ -8,6 +8,7 @@ final class FakeProfiles: ProfileRepository {
     var error: Error?
     var delay: Duration?
     private(set) var creates = 0
+    private(set) var privacyChanges = 0
 
     func load(userID: UUID) async throws -> Profile? {
         if let delay { try await Task.sleep(for: delay) }
@@ -20,7 +21,18 @@ final class FakeProfiles: ProfileRepository {
         if let delay { try await Task.sleep(for: delay) }
         if let error { throw error }
         let profile = Profile(id: input.id, username: input.username,
-                              displayName: input.displayName, createdAt: .now)
+                              displayName: input.displayName, createdAt: .now, isPrivate: false)
+        saved = profile
+        return profile
+    }
+
+    func setPrivacy(_ isPrivate: Bool, userID: UUID) async throws -> Profile {
+        privacyChanges += 1
+        if let delay { try await Task.sleep(for: delay) }
+        if let error { throw error }
+        let current = saved!
+        let profile = Profile(id: current.id, username: current.username, displayName: current.displayName,
+                              createdAt: current.createdAt, isPrivate: isPrivate)
         saved = profile
         return profile
     }
