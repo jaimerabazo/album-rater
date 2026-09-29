@@ -14,7 +14,7 @@ let package = Package(
     ],
     dependencies: [
         // Misma versión exacta que el proyecto de Xcode.
-        .package(url: "https://github.com/supabase/supabase-swift.git", exact: "2.55.1"),
+        .package(url: "https://github.com/supabase/supabase-swift.git", exact: "2.55.2"),
     ],
     targets: [
         .target(name: "AlbumRaterCore"),
